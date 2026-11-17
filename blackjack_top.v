@@ -1,10 +1,10 @@
 module blackjack_top (
     input wire clk,
     input wire btnC, // center button: synchronous reset
-    input wire [4:0] sw, // sw[0]: turn mode, sw[2:1]: P1 aces, sw[4:3]: P2 aces
+    input wire [3:0] sw, // rightmost 4 switches: active player's aces
     
-    // internal LEDs for drawn aces
-    output wire [3:0] LEDs, // LEDs[1:0]: P1 aces, LEDs[3:2]: P2 aces
+    // internal LEDs
+    output wire [5:0] LEDs, // LEDs[3:0]: active player's aces, LEDs[4]: P1 turn, LEDs[5]: P2 turn
     
     // internal 4-digit 7-seg display
     output wire [6:0] seg,
@@ -32,17 +32,25 @@ module blackjack_top (
     wire hit_pulse;
     wire stand_pulse;
 
-    wire [5:0] deck_idx; // tracked inside game_fsm (0 to 51)
-    wire [3:0] raw_card; // 1 to 13 from shuffled deck
-    wire [3:0] card_points; // 0 for ace (handled by ace_counter), 2-10 for others
+    wire [5:0] deck_idx;
+    wire [3:0] raw_card;
+    wire [3:0] card_points;
     wire is_ace;
 
+    wire [3:0] p1_ace_leds;
+    wire [3:0] p2_ace_leds;
+    wire [3:0] active_ace_leds;
     wire [4:0] p1_base_total;
     wire [4:0] p2_base_total;
-    wire [5:0] p1_ace_total;
-    wire [5:0] p2_ace_total;
-    wire [4:0] p1_total = p1_base_total + p1_ace_total[4:0];
-    wire [4:0] p2_total = p2_base_total + p2_ace_total[4:0];
+    wire [5:0] active_ace_total;
+
+    wire [4:0] p1_live_total = p1_base_total + active_ace_total[4:0];
+    wire [4:0] p2_live_total = p2_base_total + active_ace_total[4:0];
+    wire [4:0] p1_final_total;
+    wire [4:0] p2_final_total;
+    wire p1_turn;
+    wire p2_turn;
+    wire game_over;
 
     wire [3:0] last_card;
     wire [1:0] sound_code;
@@ -54,13 +62,12 @@ module blackjack_top (
         .clean_out(rst)
     );
 
-    // pulse start_shuffle for 1 cycle immediately after reset is released
+    // pulse start_shuffle for 1 cycle after reset is released
     always @(posedge clk) begin
         rst_prev <= rst;
     end
     assign start_shuffle = ~rst & rst_prev;
 
-    // shuffler
     card_shuffler shuffler_inst (
         .clk(clk),
         .rst(rst),
@@ -69,7 +76,7 @@ module blackjack_top (
         .deck_flat(deck_flat)
     );
 
-    // slice current card from deck and convert to Blackjack points
+    // slice current card and convert face cards (11-13) to 10 points
     assign raw_card = deck_flat[deck_idx*4 +: 4];
     assign is_ace = (raw_card == 4'd1);
     assign card_points = is_ace ? 4'd0 : ((raw_card >= 4'd10) ? 4'd10 : raw_card);
@@ -92,47 +99,52 @@ module blackjack_top (
         .stand_pulse(stand_pulse)
     );
 
-    // core blackjack game FSM (updated to track deck_idx, ace LEDs, and base scores)
+    // core blackjack game FSM
     blackjack_fsm game_fsm (
         .clk(clk),
         .rst(rst),
         .shuffle_done(shuffle_done),
-        .player_mode(sw[0]),
         .hit_pulse(hit_pulse),
         .stand_pulse(stand_pulse),
         .raw_card(raw_card),
         .card_points(card_points),
         .is_ace(is_ace),
-        .p1_total(p1_total),
-        .p2_total(p2_total),
+        .p1_live_total(p1_live_total),
+        .p2_live_total(p2_live_total),
         .deck_idx(deck_idx),
-        .ace_leds(LEDs),
+        .p1_ace_leds(p1_ace_leds),
+        .p2_ace_leds(p2_ace_leds),
         .p1_base_total(p1_base_total),
         .p2_base_total(p2_base_total),
+        .p1_final_total(p1_final_total),
+        .p2_final_total(p2_final_total),
+        .p1_turn(p1_turn),
+        .p2_turn(p2_turn),
+        .game_over(game_over),
         .last_card(last_card),
         .sound_code(sound_code)
     );
 
-    // player 1 ace counter (uses LEDs[1:0] and sw[2:1])
-    ace_counter p1_aces (
-        .LEDs({2'b00, LEDs[1:0]}),
-        .sw({2'b00, sw[2:1]}),
-        .total(p1_ace_total)
+    // route active player's ace LEDs to the single shared ace_counter
+    assign active_ace_leds = p2_turn ? p2_ace_leds : p1_ace_leds;
+
+    ace_counter shared_aces (
+        .LEDs(active_ace_leds),
+        .sw(sw[3:0]),
+        .total(active_ace_total)
     );
 
-    // player 2 ace counter (uses LEDs[3:2] and sw[4:3])
-    ace_counter p2_aces (
-        .LEDs({2'b00, LEDs[3:2]}),
-        .sw({2'b00, sw[4:3]}),
-        .total(p2_ace_total)
-    );
+    // drive rightmost 4 LEDs with active player's aces, plus 2 turn indicator LEDs
+    assign LEDs[3:0] = active_ace_leds;
+    assign LEDs[4] = p1_turn;
+    assign LEDs[5] = p2_turn;
 
     // internal 4-digit 7-segment controller (left = P2, right = P1)
     seven_seg_internal disp_internal (
         .clk_1khz(clk_1khz),
         .rst(rst),
-        .left_val(p2_total),
-        .right_val(p1_total),
+        .left_val(p2_final_total),
+        .right_val(p1_final_total),
         .seg(seg),
         .an(an)
     );

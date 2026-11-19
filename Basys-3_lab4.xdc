@@ -92,14 +92,14 @@ set_property -dict { PACKAGE_PIN C15  IOSTANDARD LVCMOS33 PULLUP true } [get_por
 set_property -dict { PACKAGE_PIN C16  IOSTANDARD LVCMOS33 PULLUP true } [get_ports {kp_col[3]}] ;# JB10 - Col 4[cite: 1]
 
 ##Pmod Header JC
-set_property -dict { PACKAGE_PIN K17   IOSTANDARD LVCMOS33 } [get_ports {JC[0]}];#Sch name = JC1
-set_property -dict { PACKAGE_PIN M18   IOSTANDARD LVCMOS33 } [get_ports {JC[1]}];#Sch name = JC2
-set_property -dict { PACKAGE_PIN N17   IOSTANDARD LVCMOS33 } [get_ports {JC[2]}];#Sch name = JC3
-set_property -dict { PACKAGE_PIN P18   IOSTANDARD LVCMOS33 } [get_ports {JC[3]}];#Sch name = JC4
-set_property -dict { PACKAGE_PIN L17   IOSTANDARD LVCMOS33 } [get_ports {JC[4]}];#Sch name = JC7
-set_property -dict { PACKAGE_PIN M19   IOSTANDARD LVCMOS33 } [get_ports {JC[5]}];#Sch name = JC8
-set_property -dict { PACKAGE_PIN P17   IOSTANDARD LVCMOS33 } [get_ports {JC[6]}];#Sch name = JC9
-set_property -dict { PACKAGE_PIN R18   IOSTANDARD LVCMOS33 } [get_ports {JC[7]}];#Sch name = JC10
+set_property -dict { PACKAGE_PIN K17  IOSTANDARD LVCMOS33 } [get_ports {pmod_seg[0]}] ;# JC1 - Seg A[cite: 1]
+set_property -dict { PACKAGE_PIN M18  IOSTANDARD LVCMOS33 } [get_ports {pmod_seg[1]}] ;# JC2 - Seg B[cite: 1]
+set_property -dict { PACKAGE_PIN N17  IOSTANDARD LVCMOS33 } [get_ports {pmod_seg[2]}] ;# JC3 - Seg C[cite: 1]
+set_property -dict { PACKAGE_PIN P18  IOSTANDARD LVCMOS33 } [get_ports {pmod_seg[3]}] ;# JC4 - Seg D[cite: 1]
+set_property -dict { PACKAGE_PIN L17  IOSTANDARD LVCMOS33 } [get_ports {pmod_seg[4]}] ;# JC7 - Seg E[cite: 1]
+set_property -dict { PACKAGE_PIN M19  IOSTANDARD LVCMOS33 } [get_ports {pmod_seg[5]}] ;# JC8 - Seg F[cite: 1]
+set_property -dict { PACKAGE_PIN P17  IOSTANDARD LVCMOS33 } [get_ports {pmod_seg[6]}] ;# JC9 - Seg G[cite: 1]
+set_property -dict { PACKAGE_PIN R18  IOSTANDARD LVCMOS33 } [get_ports {pmod_cat}]    ;# JC10 - Digit select[cite: 1]
 
 ##Pmod Header JXADC
 #set_property -dict { PACKAGE_PIN J3   IOSTANDARD LVCMOS33 } [get_ports {JXADC[0]}];#Sch name = XA1_P

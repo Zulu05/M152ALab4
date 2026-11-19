@@ -82,14 +82,14 @@ set_property -dict { PACKAGE_PIN H2   IOSTANDARD LVCMOS33 } [get_ports {JA[6]}];
 set_property -dict { PACKAGE_PIN G3   IOSTANDARD LVCMOS33 } [get_ports {JA[7]}];#Sch name = JA10
 
 ##Pmod Header JB
-set_property -dict { PACKAGE_PIN A14   IOSTANDARD LVCMOS33 } [get_ports {JB[0]}];#Sch name = JB1
-set_property -dict { PACKAGE_PIN A16   IOSTANDARD LVCMOS33 } [get_ports {JB[1]}];#Sch name = JB2
-set_property -dict { PACKAGE_PIN B15   IOSTANDARD LVCMOS33 } [get_ports {JB[2]}];#Sch name = JB3
-set_property -dict { PACKAGE_PIN B16   IOSTANDARD LVCMOS33 } [get_ports {JB[3]}];#Sch name = JB4
-set_property -dict { PACKAGE_PIN A15   IOSTANDARD LVCMOS33 } [get_ports {JB[4]}];#Sch name = JB7
-set_property -dict { PACKAGE_PIN A17   IOSTANDARD LVCMOS33 } [get_ports {JB[5]}];#Sch name = JB8
-set_property -dict { PACKAGE_PIN C15   IOSTANDARD LVCMOS33 } [get_ports {JB[6]}];#Sch name = JB9
-set_property -dict { PACKAGE_PIN C16   IOSTANDARD LVCMOS33 } [get_ports {JB[7]}];#Sch name = JB10
+set_property -dict { PACKAGE_PIN A14  IOSTANDARD LVCMOS33 } [get_ports {kp_row[0]}] ;# JB1 - Row 1[cite: 1]
+set_property -dict { PACKAGE_PIN A16  IOSTANDARD LVCMOS33 } [get_ports {kp_row[1]}] ;# JB2 - Row 2[cite: 1]
+set_property -dict { PACKAGE_PIN B15  IOSTANDARD LVCMOS33 } [get_ports {kp_row[2]}] ;# JB3 - Row 3[cite: 1]
+set_property -dict { PACKAGE_PIN B16  IOSTANDARD LVCMOS33 } [get_ports {kp_row[3]}] ;# JB4 - Row 4[cite: 1]
+set_property -dict { PACKAGE_PIN A15  IOSTANDARD LVCMOS33 PULLUP true } [get_ports {kp_col[0]}] ;# JB7 - Col 1[cite: 1]
+set_property -dict { PACKAGE_PIN A17  IOSTANDARD LVCMOS33 PULLUP true } [get_ports {kp_col[1]}] ;# JB8 - Col 2[cite: 1]
+set_property -dict { PACKAGE_PIN C15  IOSTANDARD LVCMOS33 PULLUP true } [get_ports {kp_col[2]}] ;# JB9 - Col 3[cite: 1]
+set_property -dict { PACKAGE_PIN C16  IOSTANDARD LVCMOS33 PULLUP true } [get_ports {kp_col[3]}] ;# JB10 - Col 4[cite: 1]
 
 ##Pmod Header JC
 set_property -dict { PACKAGE_PIN K17   IOSTANDARD LVCMOS33 } [get_ports {JC[0]}];#Sch name = JC1

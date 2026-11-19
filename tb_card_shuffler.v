@@ -1,86 +1,91 @@
-`timescale 1ns / 1ps
+module card_shuffler (
+    input  wire         clk,
+    input  wire         rst,
+    input  wire         start,         // Pulse high for 1 cycle to begin shuffling
+    output reg          done,          // High when the shuffled deck is ready
+    output reg  [207:0] deck_flat      // 52 cards * 4 bits per card = 208 bits
+);
 
-module tb_card_shuffler;
+    // Internal array to hold 52 cards (values 1 to 13, four of each)
+    reg [3:0] deck [0:51];
 
-    // Testbench signals
-    reg          clk;
-    reg          rst;
-    reg          start;
-    wire         done;
-    wire [207:0] deck_flat;
-    reg  [3:0]   current_card;
-    integer      idx;
+    // State machine definitions
+    localparam IDLE    = 2'd0,
+               SHUFFLE = 2'd1,
+               DONE    = 2'd2;
 
-    // Instantiate the synthesizable card_shuffler module
-    card_shuffler uut (
-        .clk       (clk),
-        .rst       (rst),
-        .start     (start),
-        .done      (done),
-        .deck_flat (deck_flat)
-    );
+    reg [1:0]  state;
+    reg [5:0]  i;           // Loop index from 51 down to 1
+    reg [15:0] lfsr;        // Free-running 16-bit PRNG
 
-    // 1. Generate a 100 MHz clock (10 ns period)
-    always #5 clk = ~clk;
+    // Combinational calculation for random swap index j (0 <= j <= i)
+    wire [22:0] mult = lfsr * (i + 7'd1);
+    wire [5:0]  j = mult[21:16];
 
-    // 2. Stimulus and Print Loop
+    integer k;
+
+    // Initialize free-running LFSR once (not reset on game reset)
     initial begin
-        // Initialize signals
-        clk   = 0;
-        rst   = 1;
-        start = 0;
+        lfsr = 16'hACE1;
+    end
 
-        // Hold reset for 20 ns
-        #20;
-        rst = 0;
+    // 1. Free-running 16-bit LFSR for pseudo-randomness across resets
+    always @(posedge clk) begin
+        lfsr <= {lfsr[14:0], lfsr[15] ^ lfsr[13] ^ lfsr[12] ^ lfsr[10]};
+    end
 
-        // Wait a few cycles so the free-running LFSR shifts to a new value
-        #30;
+    // 2. Fisher-Yates Shuffle State Machine
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            state <= IDLE;
+            done  <= 1'b0;
+            i     <= 6'd51;
+            for (k = 0; k < 52; k = k + 1) begin
+                deck[k] <= (k % 13) + 4'd1;
+            end
+        end else begin
+            case (state)
+                IDLE: begin
+                    done <= 1'b0;
+                    if (start) begin
+                        // Load 4 sets of 1..13 before shuffling
+                        for (k = 0; k < 52; k = k + 1) begin
+                            deck[k] <= (k % 13) + 4'd1;
+                        end
+                        i     <= 6'd51;
+                        state <= SHUFFLE;
+                    end
+                end
 
-        // Trigger the shuffle for 1 clock cycle
-        @(posedge clk);
-        start = 1;
-        @(posedge clk);
-        start = 0;
+                SHUFFLE: begin
+                    // Swap deck[i] and deck[j]
+                    deck[i] <= deck[j];
+                    deck[j] <= deck[i];
 
-        // Wait until the module finishes shuffling (51 clock cycles)
-        wait (done == 1'b1);
-        @(posedge clk);
+                    if (i == 6'd1) begin
+                        state <= DONE;
+                    end else begin
+                        i <= i - 6'd1;
+                    end
+                end
 
-        // 3. Separate loop to unpack and print the entire 52-card deck
-        $display("=================================");
-        $display("       SHUFFLED 52-CARD DECK     ");
-        $display("=================================");
+                DONE: begin
+                    done <= 1'b1;
+                    if (!start) begin
+                        state <= IDLE;
+                    end
+                end
 
-        // Inside your initial block after wait(done == 1'b1):
-        for (idx = 0; idx < 52; idx = idx + 1) begin
-            current_card = deck_flat[idx*4 +: 4];
-            $display("Position %2d : Card Value %2d", idx, current_card);
+                default: state <= IDLE;
+            endcase
         end
+    end
 
-        
-        $display("=================================");
-
-        // End simulation
-        #20;
-        $finish;
+    // 3. Pack the 2D array into the 208-bit flattened output bus
+    always @(*) begin
+        for (k = 0; k < 52; k = k + 1) begin
+            deck_flat[k*4 +: 4] = deck[k];
+        end
     end
 
 endmodule
-
-
-// wire [311:0] shuffled_deck;
-// wire shuffle_done;
-
-// card_shuffler u_shuffler (
-//     .clk       (clk),
-//     .rst       (rst),
-//     .start     (start_btn),
-//     .done      (shuffle_done),
-//     .deck_flat (shuffled_deck)
-// );
-
-// // Example: Extract the top 3 cards once done
-// wire [5:0] first_card  = shuffled_deck[0*6 +: 6]; // Bits [5:0]
-// wire [5:0] second_card = shuffled_deck[1*6 +: 6]; // Bits [11:6]
-// wire [5:0] third_card  = shuffled_deck[2*6 +: 6]; // Bits [17:12]
